@@ -94,8 +94,6 @@ public class AgronaSpecGenerator
     private static final String RETURN = "return ";
     private static final String FINAL = "final ";
     private static final String VALUE_JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN = ", value, java.nio.ByteOrder.LITTLE_ENDIAN)";
-    private final ClassName generatedAnnotation =
-        ClassName.get(IO_EIDER_UTIL, "Generated");
 
     public void generateSpecRepository(final ProcessingEnvironment pe, final PreprocessedEiderMessage object)
     {
@@ -108,7 +106,6 @@ public class AgronaSpecGenerator
 
         TypeSpec.Builder builder = TypeSpec.classBuilder(object.getRepositoryName())
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addAnnotation(AnnotationSpec.builder(generatedAnnotation).addMember("value", "\"io.eider\"").build())
             .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unused\"").build())
             .addMethods(buildRepositoryMethods(object))
             .addFields(buildRepositoryFields(object))
@@ -152,8 +149,8 @@ public class AgronaSpecGenerator
             MethodSpec.Builder builder = MethodSpec.methodBuilder("updateIndexFor" + Util.upperFirst(prop.getName()))
                 .addJavadoc("Accepts a notification that a flyweight's indexed field has been modified")
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(int.class, OFFSET)
-                .addParameter(Util.getBoxedType(prop.getType()), VALUE)
+                .addParameter(int.class, OFFSET, Modifier.FINAL)
+                .addParameter(Util.getBoxedType(prop.getType()), VALUE, Modifier.FINAL)
                 .beginControlFlow("if (" + revIndexName + ".containsKey(offset))")
                 .addStatement(Util.fromTypeToStr(prop.getType()) + " oldValue = "
                     + revIndexName + ".get(offset)")
@@ -194,7 +191,7 @@ public class AgronaSpecGenerator
                 MethodSpec.methodBuilder("getAllWithIndex" + Util.upperFirst(prop.getName() + "Value"))
                     .addJavadoc("Uses index to return list of offsets matching given value.")
                     .addModifiers(Modifier.PUBLIC)
-                    .addParameter(Util.getBoxedType(prop.getType()), VALUE)
+                    .addParameter(Util.getBoxedType(prop.getType()), VALUE, Modifier.FINAL)
                     .returns(indexResults)
                     .addStatement("List<Integer> results = new $T()", indexResultsImpl)
                     .beginControlFlow("if (" + indexName + ".containsKey(value))")
@@ -211,7 +208,7 @@ public class AgronaSpecGenerator
                     MethodSpec.methodBuilder("isUnique" + Util.upperFirst(prop.getName() + "Value"))
                         .addJavadoc("Uses unique index to confirm if the repository contains this value or not.")
                         .addModifiers(Modifier.PRIVATE)
-                        .addParameter(Util.getBoxedType(prop.getType()), VALUE)
+                        .addParameter(Util.getBoxedType(prop.getType()), VALUE, Modifier.FINAL)
                         .returns(boolean.class)
                         .addStatement("return !" + uniqueIndex + ".contains(value)")
                         .build()
@@ -327,7 +324,6 @@ public class AgronaSpecGenerator
 
         TypeSpec allItems = TypeSpec.classBuilder(UNFILTERED_ITERATOR)
             .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-            .addAnnotation(AnnotationSpec.builder(generatedAnnotation).addMember("value", "\"io.eider\"").build())
             .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unused\"").build())
             .addSuperinterface(iteratorGen)
             .addField(FieldSpec.builder(ClassName.get(object.getPackageNameGen(), object.getName()),
@@ -392,7 +388,7 @@ public class AgronaSpecGenerator
         MethodSpec.Builder builder = MethodSpec.constructorBuilder()
             .addJavadoc("constructor")
             .addParameter(
-                ParameterSpec.builder(int.class, CAPACITY)
+                ParameterSpec.builder(int.class, CAPACITY, Modifier.FINAL)
                     .addJavadoc("capacity to build.")
                     .build()
             )
@@ -437,7 +433,7 @@ public class AgronaSpecGenerator
                 .addJavadoc("Creates a respository holding at most capacity elements.")
                 .addModifiers(Modifier.PUBLIC)
                 .addModifiers(Modifier.STATIC)
-                .addParameter(int.class, CAPACITY)
+                .addParameter(int.class, CAPACITY, Modifier.FINAL)
                 .returns(ClassName.get(object.getPackageNameGen(), object.getRepositoryName()))
                 .addStatement("return new " + object.getRepositoryName() + "(capacity)")
                 .build()
@@ -448,7 +444,7 @@ public class AgronaSpecGenerator
                 .addJavadoc("Appends an element in the buffer with the provided key. Key cannot be changed. ")
                 .addJavadoc("Returns null if new element could not be created or if the key already exists.")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "id")
+                .addParameter(int.class, "id", Modifier.FINAL)
                 .returns(ClassName.get(object.getPackageNameGen(), object.getName()))
                 .beginControlFlow("if (currentCount >= maxCapacity)")
                 .addStatement(RETURN_NULL)
@@ -474,8 +470,8 @@ public class AgronaSpecGenerator
             .addJavadoc("Appends an element in the buffer by copying over from source buffer. ")
             .addJavadoc("Returns null if new element could not be created or if the key already exists.")
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(DirectBuffer.class, "buffer")
-            .addParameter(int.class, OFFSET)
+            .addParameter(DirectBuffer.class, "buffer", Modifier.FINAL)
+            .addParameter(int.class, OFFSET, Modifier.FINAL)
             .returns(ClassName.get(object.getPackageNameGen(), object.getName()))
             .beginControlFlow("if (currentCount >= maxCapacity)")
             .addStatement(RETURN_NULL)
@@ -514,7 +510,7 @@ public class AgronaSpecGenerator
             MethodSpec.methodBuilder("containsKey")
                 .addJavadoc("Returns true if the given key is known; false if not.")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "id")
+                .addParameter(int.class, "id", Modifier.FINAL)
                 .returns(boolean.class)
                 .addStatement("return offsetByKey.containsKey(id)")
                 .build()
@@ -554,7 +550,7 @@ public class AgronaSpecGenerator
                 .addJavadoc("Moves the flyweight onto the buffer segment associated with the provided key. ")
                 .addJavadoc("Returns null if not found.")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "id")
+                .addParameter(int.class, "id", Modifier.FINAL)
                 .returns(ClassName.get(object.getPackageNameGen(), object.getName()))
                 .beginControlFlow("if (offsetByKey.containsKey(id))")
                 .addStatement("int offset = offsetByKey.get(id)")
@@ -571,7 +567,7 @@ public class AgronaSpecGenerator
                 .addJavadoc("Moves the flyweight onto the buffer segment for the provided 0-based buffer index. ")
                 .addJavadoc("Returns null if not found.")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "index")
+                .addParameter(int.class, "index", Modifier.FINAL)
                 .returns(ClassName.get(object.getPackageNameGen(), object.getName()))
                 .beginControlFlow("if ((index + 1) <= currentCount)")
                 .addStatement("int offset = index + (index * flyweight.BUFFER_LENGTH)")
@@ -587,7 +583,7 @@ public class AgronaSpecGenerator
             MethodSpec.methodBuilder("getOffsetByBufferIndex")
                 .addJavadoc("Returns offset of given 0-based index, or -1 if invalid.")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "index")
+                .addParameter(int.class, "index", Modifier.FINAL)
                 .returns(int.class)
                 .beginControlFlow("if ((index + 1) <= currentCount)")
                 .addStatement("return index + (index * flyweight.BUFFER_LENGTH)")
@@ -601,7 +597,7 @@ public class AgronaSpecGenerator
                 .addJavadoc("Moves the flyweight onto the buffer offset, but only if it is a valid offset. ")
                 .addJavadoc("Returns null if the offset is invalid.")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "offset")
+                .addParameter(int.class, "offset", Modifier.FINAL)
                 .returns(ClassName.get(object.getPackageNameGen(), object.getName()))
                 .beginControlFlow("if (validOffsets.contains(offset))")
                 .addStatement(FLYWEIGHT_SET_UNDERLYING_BUFFER_INTERNAL_BUFFER_OFFSET)
@@ -902,7 +898,6 @@ public class AgronaSpecGenerator
     {
         TypeSpec.Builder builder = TypeSpec.classBuilder(object.getName())
             .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(AnnotationSpec.builder(generatedAnnotation).addMember("value", "\"io.eider\"").build())
             .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unused\"").build())
             .addField(buildEiderIdField(object.getEiderId(), object.mustBuildHeader()));
 
@@ -977,7 +972,7 @@ public class AgronaSpecGenerator
         String committed = "return";
         for (final PreprocessedEiderRepeatableRecord rec : toGen)
         {
-            precomputeBufferLength.addParameter(int.class, rec.getName() + "Count");
+            precomputeBufferLength.addParameter(int.class, rec.getName() + "Count", Modifier.FINAL);
             preCompute += " BUFFER_LENGTH + (" + rec.getName() + "Count * " + rec.getClassNameInput()
                 + ".BUFFER_LENGTH) +";
             committed += " BUFFER_LENGTH + (" + rec.getName().toUpperCase() + "_COMMITTED_SIZE * "
@@ -995,7 +990,7 @@ public class AgronaSpecGenerator
             MethodSpec.Builder resetSize = MethodSpec.methodBuilder("reset" + rec.getName() + "Size")
                 .addJavadoc("Sets the amount of " + rec.getName() + " items that can be written to the buffer")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, rec.getName() + COMMITTED_SIZE)
+                .addParameter(int.class, rec.getName() + COMMITTED_SIZE, Modifier.FINAL)
                 .addStatement(rec.getName().toUpperCase() + "_COMMITTED_SIZE = " + rec.getName() + COMMITTED_SIZE)
                 .addStatement("buffer.checkLimit(committedBufferLength())")
                 .addStatement("mutableBuffer.putInt(" + rec.getName().toUpperCase() + "_COUNT_OFFSET + initialOffset, "
@@ -1018,7 +1013,7 @@ public class AgronaSpecGenerator
             MethodSpec.Builder getRecordAtOffset = MethodSpec.methodBuilder("get" + rec.getName())
                 .addJavadoc("Gets the " + rec.getName() + " flyweight at the given index")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(int.class, "offset")
+                .addParameter(int.class, "offset", Modifier.FINAL)
                 .addStatement("if (" + rec.getName().toUpperCase() + "_COMMITTED_SIZE < offset) throw new "
                     + "RuntimeException(\"cannot access record beyond committed size\")")
                 .addStatement(rec.getName().toUpperCase() + "_FLYWEIGHT.setUnderlyingBuffer(this.buffer, "
@@ -1277,7 +1272,7 @@ public class AgronaSpecGenerator
         {
             results.add(FieldSpec
                 .builder(int.class, "HEADER_OFFSET")
-                .addJavadoc("The offset for the EIDER_ID within the buffer.")
+                .addJavadoc("The offset for the WIRE_PROTOCOL_ID within the buffer.")
                 .addModifiers(Modifier.STATIC)
                 .addModifiers(Modifier.PRIVATE)
                 .addModifiers(Modifier.FINAL)
@@ -1288,7 +1283,7 @@ public class AgronaSpecGenerator
 
             results.add(FieldSpec
                 .builder(int.class, "HEADER_GROUP_OFFSET")
-                .addJavadoc("The offset for the EIDER_GROUP_IP within the buffer.")
+                .addJavadoc("The offset for the WIRE_PROTOCOL_GROUP_ID within the buffer.")
                 .addModifiers(Modifier.STATIC)
                 .addModifiers(Modifier.PRIVATE)
                 .addModifiers(Modifier.FINAL)
@@ -1404,11 +1399,11 @@ public class AgronaSpecGenerator
                     .addStatement("if (!isMutable) throw new RuntimeException(\"cannot write to immutable buffer\")")
                     .addStatement("mutableBuffer.putShort(initialOffset + HEADER_OFFSET"
                         +
-                        ", EIDER_ID, "
+                        ", WIRE_PROTOCOL_ID, "
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
                     .addStatement("mutableBuffer.putShort(initialOffset + HEADER_GROUP_OFFSET"
                         +
-                        ", EIDER_GROUP_ID, "
+                        ", WIRE_PROTOCOL_GROUP_ID, "
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
                     .addStatement("mutableBuffer.putInt(initialOffset + LENGTH_OFFSET"
                         +
@@ -1420,17 +1415,17 @@ public class AgronaSpecGenerator
             results.add(
                 MethodSpec.methodBuilder("validateHeader")
                     .addModifiers(Modifier.PUBLIC)
-                    .addJavadoc("Validates the length and eiderSpecId in the header "
+                    .addJavadoc("Validates the length and wireProtocolId in the header "
                         + "against the expected values. False if invalid.")
                     .returns(boolean.class)
-                    .addStatement("final short eiderId = buffer.getShort(initialOffset + HEADER_OFFSET"
+                    .addStatement("final short wireProtocolId = buffer.getShort(initialOffset + HEADER_OFFSET"
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
-                    .addStatement("final short eiderGroupId = buffer.getShort(initialOffset + HEADER_GROUP_OFFSET"
+                    .addStatement("final short wireProtocolGroupId = buffer.getShort(initialOffset + HEADER_GROUP_OFFSET"
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
                     .addStatement("final int bufferLength = buffer.getInt(initialOffset + LENGTH_OFFSET"
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
-                    .addStatement("if (eiderId != EIDER_ID) return false")
-                    .addStatement("if (eiderGroupId != EIDER_GROUP_ID) return false")
+                    .addStatement("if (wireProtocolId != WIRE_PROTOCOL_ID) return false")
+                    .addStatement("if (wireProtocolGroupId != WIRE_PROTOCOL_GROUP_ID) return false")
                     .addStatement("return bufferLength == BUFFER_LENGTH")
                     .build()
             );
@@ -1448,7 +1443,7 @@ public class AgronaSpecGenerator
                 MethodSpec.methodBuilder("setIndexNotifierFor" + Util.upperFirst(prop.getName()))
                     .addModifiers(Modifier.PUBLIC)
                     .addJavadoc("Sets the indexed field update notifier to provided consumer.")
-                    .addParameter(indexUpdateNotifier, "indexedNotifier")
+                    .addParameter(indexUpdateNotifier, "indexedNotifier", Modifier.FINAL)
                     .addStatement("this.indexUpdateNotifier" + Util.upperFirst(prop.getName())
                         + " = indexedNotifier")
                     .build()
@@ -1465,7 +1460,7 @@ public class AgronaSpecGenerator
                     MethodSpec.methodBuilder("setIndexUniqueCheckerFor" + Util.upperFirst(prop.getName()))
                         .addModifiers(Modifier.PUBLIC)
                         .addJavadoc("Sets the indexed field checker to provided method.")
-                        .addParameter(indexUniquenessChecker, "indexChecker")
+                        .addParameter(indexUniquenessChecker, "indexChecker", Modifier.FINAL)
                         .addStatement("this.indexUniquenessChecker" + Util.upperFirst(prop.getName())
                             + " = indexChecker")
                         .build()
@@ -1669,7 +1664,7 @@ public class AgronaSpecGenerator
 
     private ParameterSpec getInputType(PreprocessedEiderProperty property)
     {
-        return ParameterSpec.builder(Util.fromType(property.getType()), VALUE)
+        return ParameterSpec.builder(Util.fromType(property.getType()), VALUE, Modifier.FINAL)
             .addJavadoc("Value for the " + property.getName() + " to write to buffer.")
             .build();
     }
@@ -1780,15 +1775,15 @@ public class AgronaSpecGenerator
         final String comment;
         if (hasHeader)
         {
-            comment = "The eider spec id for this type. Useful in switch statements to detect type in first 16bits.";
+            comment = "The wire protocol id for this type. Useful in switch statements to detect type in first 16bits.";
         }
         else
         {
-            comment = "The eider spec id for this type. Not written to the output buffer as there is no header.";
+            comment = "The wire protocol spec id for this type. Not written to the output buffer as there is no header.";
         }
 
         return FieldSpec
-            .builder(short.class, "EIDER_ID")
+            .builder(short.class, "WIRE_PROTOCOL_ID")
             .addJavadoc(comment)
             .addModifiers(Modifier.STATIC)
             .addModifiers(Modifier.PUBLIC)
@@ -1800,8 +1795,8 @@ public class AgronaSpecGenerator
     private FieldSpec buildEiderGroupIdField(short groupId)
     {
         return FieldSpec
-            .builder(short.class, "EIDER_GROUP_ID")
-            .addJavadoc("The eider group id for this type. "
+            .builder(short.class, "WIRE_PROTOCOL_GROUP_ID")
+            .addJavadoc("The wire protocol group id for this type. "
                 +
                 "Useful in switch statements to detect group in second 16bits.")
             .addModifiers(Modifier.STATIC)
@@ -1813,13 +1808,13 @@ public class AgronaSpecGenerator
 
     private MethodSpec buildEiderId()
     {
-        return MethodSpec.methodBuilder("eiderId")
+        return MethodSpec.methodBuilder("wireProtocolId")
             .addModifiers(Modifier.PUBLIC)
-            .addJavadoc("Returns the eider sequence.\n"
+            .addJavadoc("Returns the wire protocol id.\n"
                 +
-                "@return EIDER_ID.\n")
+                "@return WIRE_PROTOCOL_ID.\n")
             .returns(short.class)
-            .addStatement("return EIDER_ID")
+            .addStatement("return WIRE_PROTOCOL_ID")
             .build();
 
     }
@@ -1834,8 +1829,8 @@ public class AgronaSpecGenerator
                 "@param buffer - buffer to read from and write to.\n"
                 +
                 "@param offset - offset to begin reading from/writing to in the buffer.\n")
-            .addParameter(DirectBuffer.class, BUFFER)
-            .addParameter(int.class, OFFSET)
+            .addParameter(DirectBuffer.class, BUFFER, Modifier.FINAL)
+            .addParameter(int.class, OFFSET, Modifier.FINAL)
             .addStatement("this.initialOffset = offset")
             .addStatement("this.buffer = buffer")
             .beginControlFlow("if (buffer instanceof UnsafeBuffer)")
@@ -1879,8 +1874,8 @@ public class AgronaSpecGenerator
                 "@param buffer - buffer to read from and write to.\n"
                 +
                 "@param offset - offset to begin reading from/writing to in the buffer.\n")
-            .addParameter(DirectBuffer.class, BUFFER)
-            .addParameter(int.class, OFFSET)
+            .addParameter(DirectBuffer.class, BUFFER, Modifier.FINAL)
+            .addParameter(int.class, OFFSET, Modifier.FINAL)
             .addStatement("setUnderlyingBuffer(buffer, offset)")
             .addStatement("writeHeader()");
 
@@ -1914,7 +1909,6 @@ public class AgronaSpecGenerator
                                    AgronaWriterGlobalState globalState)
     {
         TypeSpec.Builder builder = TypeSpec.classBuilder(rec.getName())
-            .addAnnotation(AnnotationSpec.builder(generatedAnnotation).addMember("value", "\"io.eider\"").build())
             .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unused\"").build())
             .addModifiers(Modifier.PUBLIC);
 
@@ -2010,8 +2004,8 @@ public class AgronaSpecGenerator
                 "@param buffer - buffer to read from and write to.\n"
                 +
                 "@param offset - offset to begin reading from/writing to in the buffer.\n")
-            .addParameter(DirectBuffer.class, BUFFER)
-            .addParameter(int.class, OFFSET)
+            .addParameter(DirectBuffer.class, BUFFER, Modifier.FINAL)
+            .addParameter(int.class, OFFSET, Modifier.FINAL)
             .addStatement("this.initialOffset = offset")
             .addStatement("this.buffer = buffer")
             .beginControlFlow("if (buffer instanceof MutableDirectBuffer)")
