@@ -71,7 +71,7 @@ class SampleImplementationTest
         assertEquals(213, eiderR.readId());
 
         assertEquals(EiderObject.WIRE_PROTOCOL_ID, EiderHelper.getEiderId(buffer, 0));
-        assertEquals(EiderObject.WIRE_PROTOCOL_GROUP_ID, EiderHelper.getEiderGroupId(buffer, 0));
+        assertEquals(EiderObject.WIRE_PROTOCOL_VERSION, EiderHelper.getEiderGroupId(buffer, 0));
     }
 
     @Test

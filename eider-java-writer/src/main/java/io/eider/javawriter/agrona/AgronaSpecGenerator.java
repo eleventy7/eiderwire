@@ -1282,8 +1282,8 @@ public class AgronaSpecGenerator
             state.extendCurrentOffset(Short.BYTES);
 
             results.add(FieldSpec
-                .builder(int.class, "HEADER_GROUP_OFFSET")
-                .addJavadoc("The offset for the WIRE_PROTOCOL_GROUP_ID within the buffer.")
+                .builder(int.class, "HEADER_VERSION_OFFSET")
+                .addJavadoc("The offset for the WIRE_PROTOCOL_VERSION within the buffer.")
                 .addModifiers(Modifier.STATIC)
                 .addModifiers(Modifier.PRIVATE)
                 .addModifiers(Modifier.FINAL)
@@ -1401,9 +1401,9 @@ public class AgronaSpecGenerator
                         +
                         ", WIRE_PROTOCOL_ID, "
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
-                    .addStatement("mutableBuffer.putShort(initialOffset + HEADER_GROUP_OFFSET"
+                    .addStatement("mutableBuffer.putShort(initialOffset + HEADER_VERSION_OFFSET"
                         +
-                        ", WIRE_PROTOCOL_GROUP_ID, "
+                        ", WIRE_PROTOCOL_VERSION, "
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
                     .addStatement("mutableBuffer.putInt(initialOffset + LENGTH_OFFSET"
                         +
@@ -1420,12 +1420,12 @@ public class AgronaSpecGenerator
                     .returns(boolean.class)
                     .addStatement("final short wireProtocolId = buffer.getShort(initialOffset + HEADER_OFFSET"
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
-                    .addStatement("final short wireProtocolGroupId = buffer.getShort(initialOffset + HEADER_GROUP_OFFSET"
+                    .addStatement("final short wireProtocolVersion = buffer.getShort(initialOffset + HEADER_VERSION_OFFSET"
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
                     .addStatement("final int bufferLength = buffer.getInt(initialOffset + LENGTH_OFFSET"
                         + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
                     .addStatement("if (wireProtocolId != WIRE_PROTOCOL_ID) return false")
-                    .addStatement("if (wireProtocolGroupId != WIRE_PROTOCOL_GROUP_ID) return false")
+                    .addStatement("if (wireProtocolVersion != WIRE_PROTOCOL_VERSION) return false")
                     .addStatement("return bufferLength == BUFFER_LENGTH")
                     .build()
             );
@@ -1795,10 +1795,8 @@ public class AgronaSpecGenerator
     private FieldSpec buildEiderGroupIdField(short groupId)
     {
         return FieldSpec
-            .builder(short.class, "WIRE_PROTOCOL_GROUP_ID")
-            .addJavadoc("The wire protocol group id for this type. "
-                +
-                "Useful in switch statements to detect group in second 16bits.")
+            .builder(short.class, "WIRE_PROTOCOL_VERSION")
+            .addJavadoc("The wire protocol version for this type.")
             .addModifiers(Modifier.STATIC)
             .addModifiers(Modifier.PUBLIC)
             .addModifiers(Modifier.FINAL)
