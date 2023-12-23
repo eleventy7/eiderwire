@@ -16,9 +16,9 @@
 
 package io.eider.javawriter.agrona;
 
-import java.util.Map;
-
 import io.eider.internals.EiderPropertyType;
+
+import java.util.Map;
 
 public final class Util
 {
@@ -104,7 +104,14 @@ public final class Util
             case DOUBLE:
                 return Double.BYTES;
             case FIXED_STRING:
-                return Integer.parseInt(annotations.get(AttributeConstants.MAXLENGTH));
+                try
+                {
+                    return Integer.parseInt(annotations.get(AttributeConstants.MAXLENGTH));
+                }
+                catch (final NumberFormatException e)
+                {
+                    throw new AgronaWriterException("Invalid max length for fixed string");
+                }
             default:
                 return Integer.BYTES;
         }
