@@ -1,0 +1,4 @@
+name: "Eider Wire CodeQL Scanning"
+
+queries:
+  - uses: security-and-quality
