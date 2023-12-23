@@ -1,0 +1,30 @@
+[versions]
+junitVersion = "5.10.1"
+checkstyleVersion = "10.12.5"
+agronaVersion = "1.20.0"
+slf4jVersion = "2.0.9"
+logbackVersion = "1.4.14"
+hdrHistogramVersion = "2.1.12"
+javaPoetVersion = "1.13.0"
+jmhVersion = "1.37"
+antlrVersion = "4.13.1"
+picocliVersion = "4.7.1"
+
+[libraries]
+jupiterEngine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitVersion" }
+jupiterApi = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junitVersion" }
+checkstyle = { group = "com.puppycrawl.tools", name = "checkstyle", version.ref = "checkstyleVersion" }
+agrona = { group = "org.agrona", name = "agrona", version.ref = "agronaVersion" }
+slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4jVersion" }
+logback = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logbackVersion" }
+hdrHistogram = { group = "org.hdrhistogram", name = "HdrHistogram", version.ref = "hdrHistogramVersion" }
+javapoet = { group = "com.squareup", name = "javapoet", version.ref = "javaPoetVersion" }
+jmhCore = { group = "org.openjdk.jmh", name = "jmh-core", version.ref = "jmhVersion" }
+jmhAnnotationProcessor = { group = "org.openjdk.jmh", name = "jmh-generator-annprocess", version.ref = "jmhVersion" }
+antlr = { group = "org.antlr", name = "antlr4", version.ref = "antlrVersion" }
+antlrRuntime = { group = "org.antlr", name = "antlr4-runtime", version.ref = "antlrVersion" }
+picocli = { group = "info.picocli", name = "picocli", version.ref = "picocliVersion" }
+
+[bundles]
+
+[plugins]
