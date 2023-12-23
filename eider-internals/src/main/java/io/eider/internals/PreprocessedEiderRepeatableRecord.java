@@ -26,8 +26,8 @@ public class PreprocessedEiderRepeatableRecord
     private final List<PreprocessedEiderProperty> propertyList;
 
     public PreprocessedEiderRepeatableRecord(final String name, final String classNameInput,
-                                             final String packageNameGen,
-                                             final List<PreprocessedEiderProperty> propertyList)
+        final String packageNameGen,
+        final List<PreprocessedEiderProperty> propertyList)
     {
         this.name = name;
         this.classNameInput = classNameInput;

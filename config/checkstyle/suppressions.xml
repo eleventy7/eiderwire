@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
-
 <!--
   ~ /*
-  ~  * Copyright 2019-2020 eleventy7
+  ~  * Copyright 2021-2023 Shaun Laurens
   ~  *
   ~  * Licensed under the Apache License, Version 2.0 (the "License");
   ~  * you may not use this file except in compliance with the License.
@@ -19,12 +18,9 @@
   -->
 
 <!DOCTYPE suppressions PUBLIC
-  "-//Puppy Crawl//DTD Suppressions 1.2//EN"
-  "https://checkstyle.org/dtds/suppressions_1_2.dtd">
-
+        "-//Puppy Crawl//DTD Suppressions 1.0//EN"
+        "https://checkstyle.org/dtds/suppressions_1_0.dtd">
 <suppressions>
-  <suppress files="[\\/]generated-src[\\/]" checks="[a-zA-Z0-9]*"/>
-  <suppress files="[\\/]generated-sources[\\/]" checks=".*"/>
-  <suppress files="[\\/]generated[\\/]" checks=".*"/>
-  <suppress files="[\\/]generated-test-sources[\\/]" checks=".*"/>
+    <suppress files=".*generated.*" checks="."/>
+    <suppress files="[\\/]test[\\/]" checks="MissingJavadoc.*"/>
 </suppressions>

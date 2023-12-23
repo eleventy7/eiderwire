@@ -18,7 +18,7 @@ package io.eider.javawriter.agrona;
 
 public class AgronaWriterException extends RuntimeException
 {
-    public AgronaWriterException(String msg)
+    public AgronaWriterException(final String msg)
     {
         super(msg);
     }

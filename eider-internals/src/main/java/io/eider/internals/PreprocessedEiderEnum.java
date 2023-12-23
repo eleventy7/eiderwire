@@ -25,7 +25,7 @@ public class PreprocessedEiderEnum
     private final RepresentationType representationType;
     private final List<PreprocessedEiderEnumItem> items;
 
-    public PreprocessedEiderEnum(String name, RepresentationType representationType)
+    public PreprocessedEiderEnum(final String name, final RepresentationType representationType)
     {
         this.name = name;
         this.representationType = representationType;

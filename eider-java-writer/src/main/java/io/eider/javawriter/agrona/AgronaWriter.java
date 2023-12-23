@@ -16,16 +16,12 @@
 
 package io.eider.javawriter.agrona;
 
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeVariableName;
-
-import io.eider.javawriter.EiderCodeWriter;
 import io.eider.internals.PreprocessedEiderMessage;
 import io.eider.internals.PreprocessedEiderRepeatableRecord;
-
+import io.eider.javawriter.EiderCodeWriter;
 import org.agrona.DirectBuffer;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -33,10 +29,6 @@ import javax.lang.model.element.Modifier;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,8 +40,8 @@ public class AgronaWriter implements EiderCodeWriter
 
     @Override
     public void generate(final ProcessingEnvironment pe,
-                         final List<PreprocessedEiderRepeatableRecord> records,
-                         final List<PreprocessedEiderMessage> objects)
+        final List<PreprocessedEiderRepeatableRecord> records,
+        final List<PreprocessedEiderMessage> objects)
     {
         String packageName = null;
 
@@ -60,12 +52,12 @@ public class AgronaWriter implements EiderCodeWriter
         {
             if (specGenerator.hasAtLeastOneRecord(object))
             {
-                List<PreprocessedEiderRepeatableRecord> requiredRecs = specGenerator.listRecords(object, records);
+                final List<PreprocessedEiderRepeatableRecord> requiredRecs = specGenerator.listRecords(object, records);
                 if (requiredRecs.size() > 1)
                 {
                     throw new RuntimeException("cannot have more than one repeated record at this time.");
                 }
-                for (PreprocessedEiderRepeatableRecord rec : requiredRecs)
+                for (final PreprocessedEiderRepeatableRecord rec : requiredRecs)
                 {
                     if (!alreadyGeneratedRecs.contains(rec))
                     {
@@ -77,7 +69,7 @@ public class AgronaWriter implements EiderCodeWriter
             }
 
             packageName = object.getPackageNameGen();
-            AgronaWriterState state = new AgronaWriterState();
+            final AgronaWriterState state = new AgronaWriterState();
             specGenerator.generateSpecObject(pe, object, records, state, globalState);
 
         }
@@ -85,148 +77,31 @@ public class AgronaWriter implements EiderCodeWriter
         if (packageName != null)
         {
             generateEiderHelper(pe);
-            generateEiderGeneratedAttribute(pe);
-            generateEiderHelperInterfaces(pe);
-            generateEiderHelperInterfaceForUnqiueIndex(pe);
         }
     }
 
-    private void generateEiderHelperInterfaces(ProcessingEnvironment pe)
+    private void generateEiderHelper(final ProcessingEnvironment pe)
     {
         final String packageName = IO_EIDER_UTIL;
 
-        TypeSpec.Builder builder = TypeSpec.interfaceBuilder("IndexUpdateConsumer")
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(FunctionalInterface.class)
-            .addTypeVariable(TypeVariableName.get("T")); //String, int, T
-
-        MethodSpec acceptBuilder = MethodSpec.methodBuilder("accept")
-            .addParameter(int.class, "offset")
-            .addParameter(TypeVariableName.get("T"), "t")
-            .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
-            .addJavadoc("Accepts an index update for the given offset and type<T> value")
-            .build();
-
-        builder.addMethod(acceptBuilder);
-
-        TypeSpec generated = builder.build();
-
-        JavaFile javaFile = JavaFile.builder(packageName, generated)
-            .build();
-
-        try
-        { // write the file
-            JavaFileObject source = pe.getFiler()
-                .createSourceFile(packageName + ".IndexUpdateConsumer");
-            Writer writer = source.openWriter();
-            javaFile.writeTo(writer);
-            writer.flush();
-            writer.close();
-        } catch (IOException e)
-        {
-            //normal
-        }
-    }
-
-    private void generateEiderGeneratedAttribute(ProcessingEnvironment pe)
-    {
-        final String packageName = IO_EIDER_UTIL;
-
-        TypeSpec.Builder builder = TypeSpec.annotationBuilder("Generated")
-            .addModifiers(Modifier.PUBLIC)
-            .addJavadoc("Indicates that the code was generated; useful to eliminate the generated code when using"
-                + " static analysis tooling.")
-            .addAnnotation(AnnotationSpec.builder(Retention.class)
-                .addMember("value", "$T.CLASS", RetentionPolicy.class).build())
-            .addAnnotation(AnnotationSpec.builder(Target.class)
-                .addMember("value", "$T.TYPE", ElementType.class).build());
-
-        MethodSpec acceptBuilder = MethodSpec.methodBuilder("value")
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .addJavadoc("Name of the generator that generated the code")
-            .returns(String[].class)
-            .build();
-
-        builder.addMethod(acceptBuilder);
-
-        TypeSpec generated = builder.build();
-
-        JavaFile javaFile = JavaFile.builder(packageName, generated)
-            .build();
-
-        try
-        { // write the file
-            JavaFileObject source = pe.getFiler()
-                .createSourceFile(packageName + ".Generated");
-            Writer writer = source.openWriter();
-            javaFile.writeTo(writer);
-            writer.flush();
-            writer.close();
-        } catch (IOException e)
-        {
-            //normal
-        }
-    }
-
-    private void generateEiderHelperInterfaceForUnqiueIndex(ProcessingEnvironment pe)
-    {
-        final String packageName = IO_EIDER_UTIL;
-
-        TypeSpec.Builder builder = TypeSpec.interfaceBuilder("IndexUniquenessConsumer")
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(FunctionalInterface.class)
-            .addTypeVariable(TypeVariableName.get("T")); //String, int, T
-
-        MethodSpec uniqueBuilder = MethodSpec.methodBuilder("isUnique")
-            .addParameter(TypeVariableName.get("T"), "t")
-            .returns(boolean.class)
-            .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
-            .addJavadoc("Accepts a type<T> value and checks that the index is valid")
-            .build();
-
-        builder.addMethod(uniqueBuilder);
-
-
-        TypeSpec generated = builder.build();
-
-        JavaFile javaFile = JavaFile.builder(packageName, generated)
-            .build();
-
-        try
-        { // write the file
-            JavaFileObject source = pe.getFiler()
-                .createSourceFile(packageName + ".IndexUniquenessConsumer");
-            Writer writer = source.openWriter();
-            javaFile.writeTo(writer);
-            writer.flush();
-            writer.close();
-        } catch (IOException e)
-        {
-            //normal
-        }
-    }
-
-    private void generateEiderHelper(ProcessingEnvironment pe)
-    {
-        final String packageName = IO_EIDER_UTIL;
-
-        TypeSpec.Builder builder = TypeSpec.classBuilder("EiderHelper")
+        final TypeSpec.Builder builder = TypeSpec.classBuilder("EiderHelper")
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addMethods(buildHeaderHelperMethods());
-        TypeSpec generated = builder.build();
+        final TypeSpec generated = builder.build();
 
-        JavaFile javaFile = JavaFile.builder(packageName, generated)
+        final JavaFile javaFile = JavaFile.builder(packageName, generated)
             .build();
 
         try
         { // write the file
-            JavaFileObject source = pe.getFiler()
+            final JavaFileObject source = pe.getFiler()
                 .createSourceFile(packageName + ".EiderHelper");
-            Writer writer = source.openWriter();
+            final Writer writer = source.openWriter();
             javaFile.writeTo(writer);
             writer.flush();
             writer.close();
-        } catch (IOException e)
+        }
+        catch (final IOException e)
         {
             //normal
         }
@@ -234,7 +109,7 @@ public class AgronaWriter implements EiderCodeWriter
 
     private Iterable<MethodSpec> buildHeaderHelperMethods()
     {
-        List<MethodSpec> results = new ArrayList<>();
+        final List<MethodSpec> results = new ArrayList<>();
 
         results.add(
             MethodSpec.constructorBuilder()

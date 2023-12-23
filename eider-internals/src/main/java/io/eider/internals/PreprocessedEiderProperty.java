@@ -26,9 +26,9 @@ public class PreprocessedEiderProperty
     private final Map<String, String> annotations;
 
     public PreprocessedEiderProperty(final String name,
-                                     final EiderPropertyType type,
-                                     final String recordType,
-                                     final Map<String, String> annotations)
+        final EiderPropertyType type,
+        final String recordType,
+        final Map<String, String> annotations)
     {
         this.name = name;
         this.type = type;

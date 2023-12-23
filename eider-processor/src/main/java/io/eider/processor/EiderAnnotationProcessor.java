@@ -43,10 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@SupportedAnnotationTypes( {
+@SupportedAnnotationTypes({
     "io.eider.annotation.EiderSpec"
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
+@SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class EiderAnnotationProcessor extends AbstractProcessor
 {
     public static final String STRING = "java.lang.String";
@@ -54,24 +54,24 @@ public class EiderAnnotationProcessor extends AbstractProcessor
     private EiderCodeWriter writer;
 
     @Override
-    public synchronized void init(ProcessingEnvironment processingEnv)
+    public synchronized void init(final ProcessingEnvironment processingEnv)
     {
         super.init(processingEnv);
         writer = new AgronaWriter();
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv)
+    public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv)
     {
         if (roundEnv.processingOver() || annotations.isEmpty())
         {
             return false;
         }
 
-        List<PreprocessedEiderRepeatableRecord> records = new ArrayList<>();
-        List<PreprocessedEiderMessage> objects = new ArrayList<>();
+        final List<PreprocessedEiderRepeatableRecord> records = new ArrayList<>();
+        final List<PreprocessedEiderMessage> objects = new ArrayList<>();
 
-        for (Element el : roundEnv.getElementsAnnotatedWith(EiderRepeatableRecord.class))
+        for (final Element el : roundEnv.getElementsAnnotatedWith(EiderRepeatableRecord.class))
         {
             boolean continueProcessing = false;
             if (el instanceof TypeElement)
@@ -84,11 +84,11 @@ public class EiderAnnotationProcessor extends AbstractProcessor
                 break;
             }
 
-            TypeElement element = (TypeElement) el;
+            final TypeElement element = (TypeElement)el;
             preprocessRepeatableRecord(element, records);
         }
 
-        for (Element el : roundEnv.getElementsAnnotatedWith(EiderSpec.class))
+        for (final Element el : roundEnv.getElementsAnnotatedWith(EiderSpec.class))
         {
             boolean continueProcessing = false;
             if (el instanceof TypeElement)
@@ -101,7 +101,7 @@ public class EiderAnnotationProcessor extends AbstractProcessor
                 break;
             }
 
-            TypeElement element = (TypeElement) el;
+            final TypeElement element = (TypeElement)el;
             preprocessObject(element, objects, records);
         }
 
@@ -110,34 +110,16 @@ public class EiderAnnotationProcessor extends AbstractProcessor
         return true;
     }
 
-
-    private PreprocessedEiderMessage getEiderObject(String attrName,
-                                                    List<PreprocessedEiderMessage> objects)
-    {
-
-        final String[] f = attrName.split("\\.");
-        final String typeNameNoPkg = f[f.length - 1];
-
-        for (final PreprocessedEiderMessage object : objects)
-        {
-            if (object.getClassNameInput().equalsIgnoreCase(typeNameNoPkg))
-            {
-                return object;
-            }
-        }
-        return null;
-    }
-
     @SuppressWarnings("all")
-    private void preprocessObject(TypeElement typeElement,
-                                  final List<PreprocessedEiderMessage> objects,
-                                  final List<PreprocessedEiderRepeatableRecord> records)
+    private void preprocessObject(final TypeElement typeElement,
+        final List<PreprocessedEiderMessage> objects,
+        final List<PreprocessedEiderRepeatableRecord> records)
     {
         final String classNameInput = typeElement.getSimpleName().toString();
         final String classNameGen = classNameInput + "Eider";
         final String packageName = typeElement.getQualifiedName().toString();
         final String packageNameGen = packageName.replace(classNameInput, "gen");
-        sequence += (short) 1;
+        sequence += (short)1;
         int keyFieldCount = 0;
 
         EiderSpec annotation = typeElement.getAnnotation(EiderSpec.class);
@@ -213,13 +195,13 @@ public class EiderAnnotationProcessor extends AbstractProcessor
 
     @SuppressWarnings("all")
     private void preprocessRepeatableRecord(TypeElement typeElement,
-                                            final List<PreprocessedEiderRepeatableRecord> records)
+        final List<PreprocessedEiderRepeatableRecord> records)
     {
         final String classNameInput = typeElement.getSimpleName().toString();
         final String classNameGen = classNameInput;
         final String packageName = typeElement.getQualifiedName().toString();
         final String packageNameGen = packageName.replace(classNameInput, "gen");
-        sequence += (short) 1;
+        sequence += (short)1;
         int keyFieldCount = 0;
 
         EiderSpec annotation = typeElement.getAnnotation(EiderSpec.class);
@@ -272,14 +254,14 @@ public class EiderAnnotationProcessor extends AbstractProcessor
         records.add(obj);
     }
 
-    private void applyDefaultAnnotations(Map<String, String> annotations)
+    private void applyDefaultAnnotations(final Map<String, String> annotations)
     {
         annotations.put(AttributeConstants.MAXLENGTH, Integer.toString(Integer.MIN_VALUE));
     }
 
-    private EiderPropertyType defineType(String typeStr,
-                                         boolean isFixed,
-                                         List<PreprocessedEiderRepeatableRecord> records)
+    private EiderPropertyType defineType(final String typeStr,
+        final boolean isFixed,
+        final List<PreprocessedEiderRepeatableRecord> records)
     {
         if (typeStr.equalsIgnoreCase(STRING) && isFixed)
         {
@@ -290,7 +272,7 @@ public class EiderAnnotationProcessor extends AbstractProcessor
             return EiderPropertyType.INVALID;
         }
 
-        EiderPropertyType initialGuessType = EiderPropertyType.from(typeStr);
+        final EiderPropertyType initialGuessType = EiderPropertyType.from(typeStr);
         if (initialGuessType == EiderPropertyType.INVALID)
         {
             for (final PreprocessedEiderRepeatableRecord record : records)
@@ -306,7 +288,7 @@ public class EiderAnnotationProcessor extends AbstractProcessor
     }
 
     private void checkUnfixedStringInFixedObject(final EiderSpec annotation, final Element element,
-                                                 final boolean isFixed)
+        final boolean isFixed)
     {
         if (element.asType().toString().equalsIgnoreCase(STRING)
             &&

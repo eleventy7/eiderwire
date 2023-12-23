@@ -18,7 +18,6 @@ package io.eider.javawriter.agrona;
 
 import java.util.Map;
 
-import io.eider.javawriter.agrona.AttributeConstants;
 import io.eider.internals.EiderPropertyType;
 
 public final class Util
@@ -28,7 +27,7 @@ public final class Util
         //not used
     }
 
-    public static String upperFirst(String input)
+    public static String upperFirst(final String input)
     {
         if (input == null)
         {
@@ -38,7 +37,7 @@ public final class Util
     }
 
     @SuppressWarnings("all")
-    public static Class fromType(EiderPropertyType type)
+    public static Class fromType(final EiderPropertyType type)
     {
         switch (type)
         {
@@ -58,7 +57,7 @@ public final class Util
     }
 
     @SuppressWarnings("all")
-    public static Class getBoxedType(EiderPropertyType type)
+    public static Class getBoxedType(final EiderPropertyType type)
     {
         switch (type)
         {
@@ -78,7 +77,7 @@ public final class Util
     }
 
 
-    public static String getComparator(EiderPropertyType type, String sourceValue)
+    public static String getComparator(final EiderPropertyType type, final String sourceValue)
     {
         switch (type)
         {
@@ -92,7 +91,7 @@ public final class Util
     }
 
 
-    public static int byteLength(EiderPropertyType type, Map<String, String> annotations)
+    public static int byteLength(final EiderPropertyType type, final Map<String, String> annotations)
     {
         switch (type)
         {
@@ -111,7 +110,7 @@ public final class Util
         }
     }
 
-    public static String fromTypeToStr(EiderPropertyType type)
+    public static String fromTypeToStr(final EiderPropertyType type)
     {
         switch (type)
         {

@@ -31,10 +31,10 @@ public class PreprocessedEiderMessage
     private final List<PreprocessedEiderProperty> propertyList;
 
     public PreprocessedEiderMessage(final String name, final String classNameInput,
-                                    final short eiderId, final short eiderGroupId,
-                                    final String packageNameGen,
-                                    final boolean fixedLength,
-                                    final boolean buildHeader, final List<PreprocessedEiderProperty> propertyList)
+        final short eiderId, final short eiderGroupId,
+        final String packageNameGen,
+        final boolean fixedLength,
+        final boolean buildHeader, final List<PreprocessedEiderProperty> propertyList)
     {
         this.name = name;
         this.classNameInput = classNameInput;

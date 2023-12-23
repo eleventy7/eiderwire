@@ -27,7 +27,7 @@ public enum EiderPropertyType
     REPEATABLE_RECORD,
     INVALID;
 
-    public static EiderPropertyType from(String toString)
+    public static EiderPropertyType from(final String toString)
     {
         switch (toString)
         {
