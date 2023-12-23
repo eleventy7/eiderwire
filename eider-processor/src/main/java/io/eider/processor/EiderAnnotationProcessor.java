@@ -73,11 +73,7 @@ public class EiderAnnotationProcessor extends AbstractProcessor
 
         for (final Element el : roundEnv.getElementsAnnotatedWith(EiderRepeatableRecord.class))
         {
-            boolean continueProcessing = false;
-            if (el instanceof TypeElement)
-            {
-                continueProcessing = true;
-            }
+            final boolean continueProcessing = el instanceof TypeElement;
 
             if (!continueProcessing)
             {
@@ -90,11 +86,7 @@ public class EiderAnnotationProcessor extends AbstractProcessor
 
         for (final Element el : roundEnv.getElementsAnnotatedWith(EiderSpec.class))
         {
-            boolean continueProcessing = false;
-            if (el instanceof TypeElement)
-            {
-                continueProcessing = true;
-            }
+            final boolean continueProcessing = el instanceof TypeElement;
 
             if (!continueProcessing)
             {
@@ -120,7 +112,6 @@ public class EiderAnnotationProcessor extends AbstractProcessor
         final String packageName = typeElement.getQualifiedName().toString();
         final String packageNameGen = packageName.replace(classNameInput, "gen");
         sequence += (short)1;
-        int keyFieldCount = 0;
 
         EiderSpec annotation = typeElement.getAnnotation(EiderSpec.class);
 
@@ -202,7 +193,6 @@ public class EiderAnnotationProcessor extends AbstractProcessor
         final String packageName = typeElement.getQualifiedName().toString();
         final String packageNameGen = packageName.replace(classNameInput, "gen");
         sequence += (short)1;
-        int keyFieldCount = 0;
 
         EiderSpec annotation = typeElement.getAnnotation(EiderSpec.class);
 
@@ -244,8 +234,6 @@ public class EiderAnnotationProcessor extends AbstractProcessor
             }
         }
 
-        final String name;
-
         final PreprocessedEiderRepeatableRecord obj = new PreprocessedEiderRepeatableRecord(classNameGen,
             classNameInput,
             packageNameGen,
@@ -275,9 +263,9 @@ public class EiderAnnotationProcessor extends AbstractProcessor
         final EiderPropertyType initialGuessType = EiderPropertyType.from(typeStr);
         if (initialGuessType == EiderPropertyType.INVALID)
         {
-            for (final PreprocessedEiderRepeatableRecord record : records)
+            for (final PreprocessedEiderRepeatableRecord recordToProcess : records)
             {
-                if (typeStr.contains(record.getClassNameInput()))
+                if (typeStr.contains(recordToProcess.getClassNameInput()))
                 {
                     return EiderPropertyType.REPEATABLE_RECORD;
                 }

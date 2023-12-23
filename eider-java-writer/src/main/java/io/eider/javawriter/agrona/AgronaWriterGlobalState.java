@@ -21,10 +21,10 @@ import java.util.Map;
 
 public class AgronaWriterGlobalState
 {
-    private Map<String, Integer> bufferLengths = new HashMap<>();
+    private final Map<String, Integer> bufferLengths = new HashMap<>();
 
-    public Map<String, Integer> getBufferLengths()
+    public void putBufferLength(final String name, final int currentOffset)
     {
-        return bufferLengths;
+        bufferLengths.put(name, currentOffset);
     }
 }

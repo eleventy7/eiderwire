@@ -99,11 +99,14 @@ public class AgronaSpecGenerator
     {
         final TypeSpec.Builder builder =
             TypeSpec.classBuilder(object.getName()).addModifiers(Modifier.PUBLIC)
-                .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unused\"").build())
+                .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "\"unused\"").build())
                 .addField(buildProtocolIdField(object.getEiderId(), object.mustBuildHeader()));
 
-        builder.addFields(offsetsForFields(object, records, state, globalState)).addFields(internalFields(object,
-                records)).addMethod(buildSetUnderlyingBuffer(object)).addMethod(buildEiderId())
+        builder.addFields(offsetsForFields(object, records, state, globalState))
+            .addFields(internalFields(object, records))
+            .addMethod(buildSetUnderlyingBuffer())
+            .addMethod(buildEiderId())
             .addMethods(forInternalFields(object));
 
         if (object.mustBuildHeader())
@@ -263,7 +266,8 @@ public class AgronaSpecGenerator
 
     private Iterable<FieldSpec> offsetsForFields(final PreprocessedEiderMessage object,
         final List<PreprocessedEiderRepeatableRecord> records,
-        final AgronaWriterState state, final AgronaWriterGlobalState globalState)
+        final AgronaWriterState state,
+        final AgronaWriterGlobalState globalState)
     {
         final List<FieldSpec> results = new ArrayList<>();
 
@@ -330,7 +334,7 @@ public class AgronaSpecGenerator
                 .addModifiers(Modifier.FINAL).initializer(Integer.toString(state.getCurrentOffset())).build());
         }
 
-        globalState.getBufferLengths().put(object.getName(), state.getCurrentOffset());
+        globalState.putBufferLength(object.getName(), state.getCurrentOffset());
 
         return results;
     }
@@ -411,9 +415,16 @@ public class AgronaSpecGenerator
             .addParameter(getInputType(property));
 
         final String underlying = WRITE + Util.upperFirst(property.getName());
-        final int maxLength = Integer.parseInt(property.getAnnotations().get(AttributeConstants.MAXLENGTH));
-        builder.addStatement("final String padded = String.format(\"%" + maxLength + "s\", value)");
-        builder.addStatement(RETURN + underlying + "(padded)");
+        try
+        {
+            final int maxLength = Integer.parseInt(property.getAnnotations().get(AttributeConstants.MAXLENGTH));
+            builder.addStatement("final String padded = String.format(\"%" + maxLength + "s\", value)");
+            builder.addStatement(RETURN + underlying + "(padded)");
+        }
+        catch (final NumberFormatException e)
+        {
+            throw new RuntimeException("Cannot parse maxLength for " + property.getName());
+        }
         return builder.build();
     }
 
@@ -429,8 +440,15 @@ public class AgronaSpecGenerator
 
         if (property.getType() == EiderPropertyType.FIXED_STRING)
         {
-            final int maxLength = Integer.parseInt(property.getAnnotations().get(AttributeConstants.MAXLENGTH));
-            builder.addStatement(fixedLengthStringCheck(property, maxLength));
+            try
+            {
+                final int maxLength = Integer.parseInt(property.getAnnotations().get(AttributeConstants.MAXLENGTH));
+                builder.addStatement(fixedLengthStringCheck(property, maxLength));
+            }
+            catch (final NumberFormatException e)
+            {
+                throw new RuntimeException("Cannot parse maxLength for " + property.getName());
+            }
         }
 
         if (property.getType() == EiderPropertyType.FIXED_STRING)
@@ -516,9 +534,16 @@ public class AgronaSpecGenerator
         }
         else if (property.getType() == EiderPropertyType.FIXED_STRING)
         {
-            final int length = Integer.parseInt(property.getAnnotations().get(AttributeConstants.MAXLENGTH));
-            return "return buffer.getStringWithoutLengthAscii(initialOffset + " + getOffsetName(property.getName()) +
-                ", " + length + ").trim()";
+            try
+            {
+                final int length = Integer.parseInt(property.getAnnotations().get(AttributeConstants.MAXLENGTH));
+                return "return buffer.getStringWithoutLengthAscii(initialOffset + " +
+                    getOffsetName(property.getName()) + ", " + length + ").trim()";
+            }
+            catch (final NumberFormatException e)
+            {
+                throw new RuntimeException("Cannot parse maxLength for " + property.getName());
+            }
         }
         else if (property.getType() == EiderPropertyType.BOOLEAN)
         {
@@ -568,7 +593,7 @@ public class AgronaSpecGenerator
 
     }
 
-    private MethodSpec buildSetUnderlyingBuffer(final PreprocessedEiderMessage object)
+    private MethodSpec buildSetUnderlyingBuffer()
     {
         final MethodSpec.Builder builder =
             MethodSpec.methodBuilder("setUnderlyingBuffer").addModifiers(Modifier.PUBLIC).returns(void.class)
@@ -605,7 +630,8 @@ public class AgronaSpecGenerator
         return builder.build();
     }
 
-    public void generateSpecRecord(final ProcessingEnvironment pe, final PreprocessedEiderRepeatableRecord rec,
+    public void generateSpecRecord(final ProcessingEnvironment pe,
+        final PreprocessedEiderRepeatableRecord rec,
         final AgronaWriterGlobalState globalState)
     {
         final TypeSpec.Builder builder =
@@ -681,7 +707,7 @@ public class AgronaSpecGenerator
             .addModifiers(Modifier.FINAL)
             .initializer(Integer.toString(state.getCurrentOffset())).build());
 
-        globalState.getBufferLengths().put(rec.getName(), state.getCurrentOffset());
+        globalState.putBufferLength(rec.getName(), state.getCurrentOffset());
 
         return results;
     }

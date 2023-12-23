@@ -51,6 +51,7 @@ public class EiderLanguageVisitor extends eiderBaseVisitor<EiderParserContext>
         return visitChildren(ctx);
     }
 
+    @Override
     public EiderParserContext visitAnnotationStatement(final eiderParser.AnnotationStatementContext ctx)
     {
         return visitChildren(ctx);
