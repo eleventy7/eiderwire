@@ -16,7 +16,6 @@
 
 package io.eider.javawriter;
 
-import io.eider.internals.PreprocessedEiderComposite;
 import io.eider.internals.PreprocessedEiderMessage;
 import io.eider.internals.PreprocessedEiderRepeatableRecord;
 
@@ -27,6 +26,5 @@ public interface EiderCodeWriter
 {
     void generate(ProcessingEnvironment pe,
                   List<PreprocessedEiderRepeatableRecord> records,
-                  List<PreprocessedEiderMessage> objects,
-                  List<PreprocessedEiderComposite> composites);
+                  List<PreprocessedEiderMessage> objects);
 }

@@ -26,9 +26,5 @@ import java.lang.annotation.Target;
 public @interface EiderAttribute
 {
     int maxLength() default Integer.MIN_VALUE;
-    boolean sequence() default false;
-    boolean key() default false;
-    boolean indexed() default false;
-    boolean unique() default false;
     boolean repeatedRecord() default false;
 }

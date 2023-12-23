@@ -2,7 +2,9 @@
 
 ### Eider is not suitable for production usage, and further development on Eider has ended.
 
-Annotation-based flyweight generator built for fast iteration while developing [Aeron Cookbook](https://aeroncookbook.com). Intended for messages over Aeron and Aeron IPC when all processes are built and deployed as a single unit. Only suitable for single threaded usage scenarios. 
+Annotation-based flyweight generator originally built for fast iteration while developing [Aeron Cookbook](https://aeroncookbook.com).
+Intended for messages over Aeron and Aeron IPC when all processes are built and deployed as a single unit.
+Only suitable for single threaded usage scenarios. 
 
 Given a specification object, Eider generates a zero-copy flyweight that can be used to read and write to a buffer with random access. The original specification object is not used at runtime. The generated flyweight has no runtime dependencies beyond Java and the target buffer implementation.
 
@@ -22,39 +24,10 @@ Current features:
 - Optional Header generation plus a helper to detect message types in a buffer
     - see Aeron Cookbook for [sample in use](https://github.com/eleventy7/aeron-cookbook-code/blob/master/cluster-core/src/main/java/com/aeroncookbook/cluster/rsm/node/RsmDemuxer.java)
     - headers can be turned off for use with Agrona RingBuffer implementations which has a built-in message type id header.
-- Sequence Generator
-- Optional repositories
-    - Note! Repositories hold data within internal buffers and maps. This will cause allocation.
-    - repositories hold a maximum number of items, and cannot be resized at runtime
-    - `appendWithKey` appends an item to the end of the buffer, up to the pre-defined capacity
-    - `getByKey`, `getByBufferIndex`, `getByBufferOffset`, `containsKey` and `Iterator<>` functionality
-    - `getCrc32` useful to support cross process comparison of repository contents (e.g. in a Aeron Cluster determinism check)
-    - `getOffsetByBufferIndex` and `appendByCopyFromBuffer` which can be used for Aeron Cluster snapshot reading and writing.
-    - optional indexed fields. Indexes support updates and transactions. Indexes update synchronously at the time a field write occurs. 
-    - optional Unique indexes on fields
-    - optional transactional support.  
-- Optional transactional support on each flyweight. If this is enabled, the flyweight adds `beginTransaction`, `commit` and `rollback` methods. Note, by default reads are dirty; the buffer is only rolled back to the state it was in when `beginTransaction` was called if `rollback` was called. 
-    - Note: this will allocate a buffer of length equal to the flyweight buffer length internally.   
-- Composite reader/writer
-    - provides a single, keyed object which contains multiple Eider objects read/written into a single buffer
-    - Optional repository support
 - Reasonable performance
     - Performance varies on the object complexity and buffer implementation. JMH test included uses Agrona UnsafeBuffer.
     - Complex transactional objects read and write around 1.2 million messages/second (a roundtrip of around 0.82μs) 
     - Simple non-transactional objects read and write at around 175 million messages/second (a roundtrip of around 5.7ns)
-
-Features not planned for future releases:
-
-- byte[], BigDecimal, char or other type support
-- versioning or backwards/forwards compatibility
-- support for anything but JVM
-- thread safety
-- schema validation
-- migrations
-- multiple variable length fields
-- more than one repeating group per message
-- Nullable objects with customizable null representations 
-- Maven Central publishing
 
 ### Flyweight Sample
 

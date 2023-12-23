@@ -23,7 +23,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import io.eider.javawriter.EiderCodeWriter;
-import io.eider.internals.PreprocessedEiderComposite;
 import io.eider.internals.PreprocessedEiderMessage;
 import io.eider.internals.PreprocessedEiderRepeatableRecord;
 
@@ -45,14 +44,12 @@ public class AgronaWriter implements EiderCodeWriter
 {
     private static final String IO_EIDER_UTIL = "io.eider.util";
 
-    private final AgronaCompositeGenerator compositeGenerator = new AgronaCompositeGenerator();
     private final AgronaSpecGenerator specGenerator = new AgronaSpecGenerator();
 
     @Override
     public void generate(final ProcessingEnvironment pe,
                          final List<PreprocessedEiderRepeatableRecord> records,
-                         final List<PreprocessedEiderMessage> objects,
-                         final List<PreprocessedEiderComposite> composites)
+                         final List<PreprocessedEiderMessage> objects)
     {
         String packageName = null;
 
@@ -82,22 +79,11 @@ public class AgronaWriter implements EiderCodeWriter
             packageName = object.getPackageNameGen();
             AgronaWriterState state = new AgronaWriterState();
             specGenerator.generateSpecObject(pe, object, records, state, globalState);
-            if (object.buildRepository())
-            {
-                specGenerator.generateSpecRepository(pe, object);
-            }
+
         }
 
         if (packageName != null)
         {
-            for (final PreprocessedEiderComposite composite : composites)
-            {
-                compositeGenerator.generateComposite(pe, composite, globalState);
-                if (composite.buildRepository())
-                {
-                    compositeGenerator.generateCompositeRepository(pe, composite);
-                }
-            }
             generateEiderHelper(pe);
             generateEiderGeneratedAttribute(pe);
             generateEiderHelperInterfaces(pe);

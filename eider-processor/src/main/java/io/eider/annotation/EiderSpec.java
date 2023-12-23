@@ -25,10 +25,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface EiderSpec
 {
-    short eiderId() default -1;
+    short wireProtocolId() default -1;
     boolean fixedLength() default true;
-    boolean transactional() default false;
     String name() default "";
-    short eiderGroup() default 1;
+    short version() default 1;
     boolean header() default true;
 }

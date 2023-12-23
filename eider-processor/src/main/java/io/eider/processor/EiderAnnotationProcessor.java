@@ -17,16 +17,12 @@
 package io.eider.processor;
 
 import io.eider.annotation.EiderAttribute;
-import io.eider.annotation.EiderComposite;
 import io.eider.annotation.EiderRepeatableRecord;
-import io.eider.annotation.EiderRepository;
 import io.eider.annotation.EiderSpec;
 import io.eider.internals.EiderPropertyType;
-import io.eider.internals.PreprocessedEiderComposite;
 import io.eider.internals.PreprocessedEiderMessage;
 import io.eider.internals.PreprocessedEiderProperty;
 import io.eider.internals.PreprocessedEiderRepeatableRecord;
-import io.eider.internals.PreprocessedNamedEiderObject;
 import io.eider.javawriter.EiderCodeWriter;
 import io.eider.javawriter.agrona.AgronaWriter;
 import io.eider.javawriter.agrona.AttributeConstants;
@@ -48,8 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SupportedAnnotationTypes( {
-    "io.eider.annotation.EiderSpec",
-    "io.eider.annotation.EiderComposite"
+    "io.eider.annotation.EiderSpec"
 })
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class EiderAnnotationProcessor extends AbstractProcessor
@@ -75,7 +70,6 @@ public class EiderAnnotationProcessor extends AbstractProcessor
 
         List<PreprocessedEiderRepeatableRecord> records = new ArrayList<>();
         List<PreprocessedEiderMessage> objects = new ArrayList<>();
-        List<PreprocessedEiderComposite> composites = new ArrayList<>();
 
         for (Element el : roundEnv.getElementsAnnotatedWith(EiderRepeatableRecord.class))
         {
@@ -111,147 +105,11 @@ public class EiderAnnotationProcessor extends AbstractProcessor
             preprocessObject(element, objects, records);
         }
 
-        for (Element el : roundEnv.getElementsAnnotatedWith(EiderComposite.class))
-        {
-            boolean continueProcessing = false;
-            if (el instanceof TypeElement)
-            {
-                continueProcessing = true;
-            }
-
-            if (!continueProcessing)
-            {
-                break;
-            }
-
-            TypeElement element = (TypeElement) el;
-            preprocessCompositeObject(processingEnv, element, objects, composites);
-        }
-
-        writer.generate(processingEnv, records, objects, composites);
+        writer.generate(processingEnv, records, objects);
 
         return true;
     }
 
-    @SuppressWarnings("all")
-    private void preprocessCompositeObject(ProcessingEnvironment pe, TypeElement typeElement,
-                                           List<PreprocessedEiderMessage> objects,
-                                           List<PreprocessedEiderComposite> composites)
-    {
-        final String classNameInput = typeElement.getSimpleName().toString();
-        final String packageName = typeElement.getQualifiedName().toString();
-        final String packageNameGen = packageName.replace(classNameInput, "gen");
-        String className = classNameInput + "EiderComposite";
-        sequence += (short) 1;
-        int keyFieldCount = 0;
-
-        EiderComposite annotation = typeElement.getAnnotation(EiderComposite.class);
-
-        final List<PreprocessedNamedEiderObject> objectsIncluded = new ArrayList<>();
-        final List<? extends Element> enclosedElements = typeElement.getEnclosedElements();
-
-
-        EiderPropertyType keyType = null;
-        String keyName = "";
-
-        if (!annotation.name().isEmpty())
-        {
-            className = annotation.name();
-        }
-
-        for (Element element : enclosedElements)
-        {
-            ElementKind kind = element.getKind();
-            if (kind == ElementKind.FIELD)
-            {
-                Map<String, String> annotations = new HashMap<>();
-                boolean isFixed = false;
-                EiderAttribute attribute = element.getAnnotation(EiderAttribute.class);
-                if (attribute != null)
-                {
-                    annotations.put(AttributeConstants.KEY, Boolean.toString(attribute.key()));
-                    if (attribute.key())
-                    {
-                        if (keyFieldCount != 0)
-                        {
-                            throw new EiderProcessorException("Only a single key field allowed");
-                        }
-                        keyFieldCount += 1;
-                    }
-
-                    if (attribute.maxLength() != -1)
-                    {
-                        isFixed = true;
-                    }
-                }
-                else
-                {
-                    annotations.put(AttributeConstants.KEY, "false");
-                }
-                final String attrName = element.getSimpleName().toString();
-
-                if (annotations.get(AttributeConstants.KEY).equalsIgnoreCase("true"))
-                {
-                    //keys cannot be records
-                    keyType = defineType(element.asType().toString(), isFixed, Collections.emptyList());
-
-                    if (keyType == EiderPropertyType.INVALID)
-                    {
-                        throw new EiderProcessorException("Only int and long fields can be EiderComposite keys");
-                    }
-
-                    keyName = attrName;
-                }
-                else
-                {
-                    PreprocessedEiderMessage eiderObject = getEiderObject(element.asType().toString(), objects);
-
-                    if (eiderObject == null)
-                    {
-                        throw new EiderProcessorException("Could not find eider spec for "
-                            + element.asType().toString());
-                    }
-                    else
-                    {
-                        final PreprocessedNamedEiderObject cItem = new PreprocessedNamedEiderObject(attrName,
-                            eiderObject);
-                        objectsIncluded.add(cItem);
-                    }
-                }
-            }
-        }
-
-        if (keyFieldCount == 0)
-        {
-            throw new EiderProcessorException("EiderComposite objects must have exactly 1 key");
-        }
-
-        EiderRepository repository = typeElement.getAnnotation(EiderRepository.class);
-        final boolean enableRepository;
-        final String repositoryName;
-        if (repository == null)
-        {
-            enableRepository = false;
-            repositoryName = "";
-        }
-        else
-        {
-            enableRepository = true;
-            if (repository.name().isEmpty())
-            {
-                repositoryName = className + "Repository";
-            }
-            else
-            {
-                repositoryName = repository.name();
-            }
-        }
-
-        short eiderId = annotation.eiderId() == -1 ? sequence : annotation.eiderId();
-        final PreprocessedEiderComposite composite = new PreprocessedEiderComposite(className, classNameInput,
-            eiderId, packageNameGen, enableRepository, repositoryName, keyName, keyType, objectsIncluded);
-        composites.add(composite);
-    }
 
     private PreprocessedEiderMessage getEiderObject(String attrName,
                                                     List<PreprocessedEiderMessage> objects)
@@ -298,19 +156,6 @@ public class EiderAnnotationProcessor extends AbstractProcessor
                 if (attribute != null)
                 {
                     annotations.put(AttributeConstants.MAXLENGTH, Integer.toString(attribute.maxLength()));
-                    annotations.put(AttributeConstants.KEY, Boolean.toString(attribute.key()));
-                    annotations.put(AttributeConstants.SEQUENCE_GENERATOR, Boolean.toString(attribute.sequence()));
-                    annotations.put(AttributeConstants.INDEXED, Boolean.toString(attribute.indexed()));
-                    annotations.put(AttributeConstants.UNIQUE, Boolean.toString(attribute.unique()));
-
-                    if (attribute.key())
-                    {
-                        if (keyFieldCount != 0)
-                        {
-                            throw new EiderProcessorException("Only a single key field allowed");
-                        }
-                        keyFieldCount += 1;
-                    }
 
                     if (attribute.maxLength() != -1)
                     {
@@ -334,13 +179,13 @@ public class EiderAnnotationProcessor extends AbstractProcessor
         }
 
         final short objectEiderId;
-        if (annotation.eiderId() == -1)
+        if (annotation.wireProtocolId() == -1)
         {
             objectEiderId = sequence;
         }
         else
         {
-            objectEiderId = annotation.eiderId();
+            objectEiderId = annotation.wireProtocolId();
         }
 
         final String name;
@@ -353,40 +198,13 @@ public class EiderAnnotationProcessor extends AbstractProcessor
             name = classNameGen;
         }
 
-        EiderRepository repository = typeElement.getAnnotation(EiderRepository.class);
-        final boolean enableRepository;
-        final boolean enableTransactionalRepository;
-        final String repositoryName;
-        if (repository == null)
-        {
-            enableRepository = false;
-            enableTransactionalRepository = false;
-            repositoryName = "";
-        }
-        else
-        {
-            enableRepository = true;
-            if (repository.name().isEmpty())
-            {
-                repositoryName = name + "Repository";
-            }
-            else
-            {
-                repositoryName = repository.name();
-            }
-            enableTransactionalRepository = repository.transactional();
-        }
 
         final PreprocessedEiderMessage obj = new PreprocessedEiderMessage(name,
             classNameInput,
             objectEiderId,
-            annotation.eiderGroup(),
+            annotation.version(),
             packageNameGen,
             annotation.fixedLength(),
-            enableRepository,
-            repositoryName,
-            annotation.transactional(),
-            enableTransactionalRepository,
             annotation.header(),
             preprocessedEiderProperties);
 
@@ -420,20 +238,7 @@ public class EiderAnnotationProcessor extends AbstractProcessor
                 if (attribute != null)
                 {
                     annotations.put(AttributeConstants.MAXLENGTH, Integer.toString(attribute.maxLength()));
-                    annotations.put(AttributeConstants.KEY, Boolean.toString(attribute.key()));
-                    annotations.put(AttributeConstants.SEQUENCE_GENERATOR, Boolean.toString(attribute.sequence()));
-                    annotations.put(AttributeConstants.INDEXED, Boolean.toString(attribute.indexed()));
-                    annotations.put(AttributeConstants.UNIQUE, Boolean.toString(attribute.unique()));
                     annotations.put(AttributeConstants.REPEATED_RECORD, Boolean.toString(attribute.repeatedRecord()));
-
-                    if (attribute.key())
-                    {
-                        if (keyFieldCount != 0)
-                        {
-                            throw new EiderProcessorException("Only a single key field allowed");
-                        }
-                        keyFieldCount += 1;
-                    }
 
                     if (attribute.maxLength() != -1)
                     {
@@ -470,10 +275,6 @@ public class EiderAnnotationProcessor extends AbstractProcessor
     private void applyDefaultAnnotations(Map<String, String> annotations)
     {
         annotations.put(AttributeConstants.MAXLENGTH, Integer.toString(Integer.MIN_VALUE));
-        annotations.put(AttributeConstants.SEQUENCE_GENERATOR, Boolean.toString(false));
-        annotations.put(AttributeConstants.KEY, Boolean.toString(false));
-        annotations.put(AttributeConstants.UNIQUE, Boolean.toString(false));
-        annotations.put(AttributeConstants.INDEXED, Boolean.toString(false));
     }
 
     private EiderPropertyType defineType(String typeStr,

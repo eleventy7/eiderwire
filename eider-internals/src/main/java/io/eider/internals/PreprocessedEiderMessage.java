@@ -26,19 +26,14 @@ public class PreprocessedEiderMessage
     private final short eiderGroupId;
     private final String packageNameGen;
     private final boolean fixedLength;
-    private final boolean buildRepository;
     private final boolean buildHeader;
-    private final String repositoryName;
-    private final boolean transactional;
-    private final boolean transactionalRepository;
+
     private final List<PreprocessedEiderProperty> propertyList;
 
     public PreprocessedEiderMessage(final String name, final String classNameInput,
                                     final short eiderId, final short eiderGroupId,
                                     final String packageNameGen,
                                     final boolean fixedLength,
-                                    final boolean buildRepository, final String repositoryName,
-                                    final boolean transactional, final boolean transactionalRepository,
                                     final boolean buildHeader, final List<PreprocessedEiderProperty> propertyList)
     {
         this.name = name;
@@ -47,10 +42,7 @@ public class PreprocessedEiderMessage
         this.eiderGroupId = eiderGroupId;
         this.packageNameGen = packageNameGen;
         this.fixedLength = fixedLength;
-        this.buildRepository = buildRepository;
-        this.repositoryName = repositoryName;
-        this.transactional = transactional;
-        this.transactionalRepository = transactionalRepository;
+
         this.propertyList = propertyList;
         this.buildHeader = buildHeader;
     }
@@ -80,20 +72,6 @@ public class PreprocessedEiderMessage
         return packageNameGen;
     }
 
-    public boolean buildRepository()
-    {
-        return buildRepository;
-    }
-
-    public boolean isTransactional()
-    {
-        return transactional;
-    }
-
-    public String getRepositoryName()
-    {
-        return repositoryName;
-    }
 
     public boolean isFixedLength()
     {
@@ -103,11 +81,6 @@ public class PreprocessedEiderMessage
     public short getEiderGroupId()
     {
         return eiderGroupId;
-    }
-
-    public boolean isTransactionalRepository()
-    {
-        return transactionalRepository;
     }
 
     public boolean mustBuildHeader()
