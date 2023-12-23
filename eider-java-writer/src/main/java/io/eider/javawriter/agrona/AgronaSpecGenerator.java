@@ -95,7 +95,7 @@ public class AgronaSpecGenerator
 
     public void generateSpecObject(final ProcessingEnvironment processingEnv, final PreprocessedEiderMessage object,
         final List<PreprocessedEiderRepeatableRecord> records,
-        final AgronaWriterState state, final AgronaWriterGlobalState globalState)
+        final AgronaWriterState state)
     {
         final TypeSpec.Builder builder =
             TypeSpec.classBuilder(object.getName()).addModifiers(Modifier.PUBLIC)
@@ -103,7 +103,7 @@ public class AgronaSpecGenerator
                     .addMember("value", "\"unused\"").build())
                 .addField(buildProtocolIdField(object.getEiderId(), object.mustBuildHeader()));
 
-        builder.addFields(offsetsForFields(object, records, state, globalState))
+        builder.addFields(offsetsForFields(object, records, state))
             .addFields(internalFields(object, records))
             .addMethod(buildSetUnderlyingBuffer())
             .addMethod(buildEiderId())
@@ -266,15 +266,32 @@ public class AgronaSpecGenerator
 
     private Iterable<FieldSpec> offsetsForFields(final PreprocessedEiderMessage object,
         final List<PreprocessedEiderRepeatableRecord> records,
-        final AgronaWriterState state,
-        final AgronaWriterGlobalState globalState)
+        final AgronaWriterState state)
     {
         final List<FieldSpec> results = new ArrayList<>();
 
         if (object.mustBuildHeader())
         {
-            results.add(FieldSpec.builder(int.class, "HEADER_OFFSET").addJavadoc("The offset for the WIRE_PROTOCOL_ID" +
-                    " within the buffer.").addModifiers(Modifier.STATIC).addModifiers(Modifier.PRIVATE)
+            results.add(FieldSpec.builder(int.class, "MESSAGE_LENGTH_OFFSET")
+                .addJavadoc("The offset for the message length within the buffer.")
+                .addModifiers(Modifier.STATIC)
+                .addModifiers(Modifier.PRIVATE)
+                .addModifiers(Modifier.FINAL).initializer(Integer.toString(state.getCurrentOffset())).build());
+
+            state.extendCurrentOffset(Integer.BYTES);
+
+            results.add(FieldSpec.builder(int.class, "EIDER_WIRE_ENCODING_TYPE_OFFSET")
+                .addJavadoc("The offset for the encoding type within the buffer.")
+                .addModifiers(Modifier.STATIC)
+                .addModifiers(Modifier.PRIVATE)
+                .addModifiers(Modifier.FINAL).initializer(Integer.toString(state.getCurrentOffset())).build());
+
+            state.extendCurrentOffset(Short.BYTES);
+
+            results.add(FieldSpec.builder(int.class, "PROTOCOL_ID_OFFSET")
+                .addJavadoc("The offset for the WIRE_PROTOCOL_ID within the buffer.")
+                .addModifiers(Modifier.STATIC)
+                .addModifiers(Modifier.PRIVATE)
                 .addModifiers(Modifier.FINAL).initializer(Integer.toString(state.getCurrentOffset())).build());
 
             state.extendCurrentOffset(Short.BYTES);
@@ -287,11 +304,6 @@ public class AgronaSpecGenerator
 
             state.extendCurrentOffset(Short.BYTES);
 
-            results.add(FieldSpec.builder(int.class, "LENGTH_OFFSET").addJavadoc("The length offset. Required for " +
-                    "segmented buffers.").addModifiers(Modifier.STATIC).addModifiers(Modifier.PRIVATE)
-                .addModifiers(Modifier.FINAL).initializer(Integer.toString(state.getCurrentOffset())).build());
-
-            state.extendCurrentOffset(Integer.BYTES);
         }
 
         for (final PreprocessedEiderProperty property : object.getPropertyList())
@@ -334,8 +346,6 @@ public class AgronaSpecGenerator
                 .addModifiers(Modifier.FINAL).initializer(Integer.toString(state.getCurrentOffset())).build());
         }
 
-        globalState.putBufferLength(object.getName(), state.getCurrentOffset());
-
         return results;
     }
 
@@ -367,21 +377,29 @@ public class AgronaSpecGenerator
             results.add(MethodSpec.methodBuilder("writeHeader").addJavadoc("Writes the header data to the buffer.")
                 .addModifiers(Modifier.PUBLIC)
                 .addStatement("if (!isMutable) throw new RuntimeException(\"cannot write to immutable buffer\")")
-                .addStatement("mutableBuffer.putShort(initialOffset + HEADER_OFFSET" + ", WIRE_PROTOCOL_ID, " +
-                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN).addStatement(
-                    "mutableBuffer.putShort(initialOffset + HEADER_VERSION_OFFSET" + ", WIRE_PROTOCOL_VERSION, " +
-                        JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN).addStatement(
-                    "mutableBuffer.putInt(initialOffset + LENGTH_OFFSET" + ", BUFFER_LENGTH, " +
-                        JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN).build());
+                .addStatement("mutableBuffer.putInt(initialOffset + MESSAGE_LENGTH_OFFSET" + ", BUFFER_LENGTH, " +
+                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
+                .addStatement("mutableBuffer.putShort(initialOffset + EIDER_WIRE_ENCODING_TYPE_OFFSET" +
+                    ",  (short)43, " + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
+                .addStatement("mutableBuffer.putShort(initialOffset + PROTOCOL_ID_OFFSET" + ", WIRE_PROTOCOL_ID, " +
+                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN)
+                .addStatement("mutableBuffer.putShort(initialOffset + HEADER_VERSION_OFFSET" +
+                    ", WIRE_PROTOCOL_VERSION, " + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN).build());
 
             results.add(MethodSpec.methodBuilder("validateHeader").addModifiers(Modifier.PUBLIC).addJavadoc(
                     "Validates the length and wireProtocolId in the header " + "against the expected values. False if " +
-                        "invalid.").returns(boolean.class).addStatement("final short wireProtocolId = buffer.getShort" +
-                    "(initialOffset + HEADER_OFFSET" + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1).addStatement("final short " +
+                        "invalid.").returns(boolean.class)
+                .addStatement("final int bufferLength = buffer.getInt(initialOffset + MESSAGE_LENGTH_OFFSET" +
+                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
+                .addStatement(
+                    "final int encodingType = buffer.getShort(initialOffset + EIDER_WIRE_ENCODING_TYPE_OFFSET" +
+                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
+                .addStatement("final short wireProtocolId = buffer.getShort" +
+                    "(initialOffset + PROTOCOL_ID_OFFSET" + JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
+                .addStatement("final short " +
                     "wireProtocolVersion = buffer.getShort(initialOffset + " + "HEADER_VERSION_OFFSET" +
-                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1).addStatement(
-                    "final int bufferLength = buffer.getInt(initialOffset + LENGTH_OFFSET" +
-                        JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
+                    JAVA_NIO_BYTE_ORDER_LITTLE_ENDIAN1)
+                .addStatement("if (encodingType != EIDER_WIRE_ENCODING_TYPE_OFFSET) return false")
                 .addStatement("if (wireProtocolId != WIRE_PROTOCOL_ID) return false")
                 .addStatement("if (wireProtocolVersion != WIRE_PROTOCOL_VERSION) return false")
                 .addStatement("return bufferLength == BUFFER_LENGTH").build());
@@ -631,8 +649,7 @@ public class AgronaSpecGenerator
     }
 
     public void generateSpecRecord(final ProcessingEnvironment pe,
-        final PreprocessedEiderRepeatableRecord rec,
-        final AgronaWriterGlobalState globalState)
+        final PreprocessedEiderRepeatableRecord rec)
     {
         final TypeSpec.Builder builder =
             TypeSpec.classBuilder(rec.getName())
@@ -641,7 +658,7 @@ public class AgronaSpecGenerator
 
         final AgronaWriterState state = new AgronaWriterState();
 
-        builder.addFields(offsetsForRecFields(rec, state, globalState)).addFields(internalRecFields())
+        builder.addFields(offsetsForRecFields(rec, state)).addFields(internalRecFields())
             .addMethod(buildSetUnderlyingRecBuffer()).addMethods(forInternalRecFields(rec));
 
         final TypeSpec generated = builder.build();
@@ -687,8 +704,7 @@ public class AgronaSpecGenerator
     }
 
     private Iterable<FieldSpec> offsetsForRecFields(final PreprocessedEiderRepeatableRecord rec,
-        final AgronaWriterState state,
-        final AgronaWriterGlobalState globalState)
+        final AgronaWriterState state)
     {
         final List<FieldSpec> results = new ArrayList<>();
 
@@ -706,8 +722,6 @@ public class AgronaSpecGenerator
             .addModifiers(Modifier.PUBLIC)
             .addModifiers(Modifier.FINAL)
             .initializer(Integer.toString(state.getCurrentOffset())).build());
-
-        globalState.putBufferLength(rec.getName(), state.getCurrentOffset());
 
         return results;
     }
