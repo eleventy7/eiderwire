@@ -8,7 +8,7 @@ hdrHistogramVersion = "2.1.12"
 javaPoetVersion = "1.13.0"
 jmhVersion = "1.37"
 antlrVersion = "4.13.1"
-picocliVersion = "4.7.1"
+picocliVersion = "4.7.5"
 
 [libraries]
 jupiterEngine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitVersion" }
