@@ -2,13 +2,13 @@
 junitVersion = "5.10.1"
 checkstyleVersion = "10.12.5"
 agronaVersion = "1.20.0"
-slf4jVersion = "2.0.9"
+slf4jVersion = "2.0.10"
 logbackVersion = "1.4.14"
 hdrHistogramVersion = "2.1.12"
 javaPoetVersion = "1.13.0"
 jmhVersion = "1.37"
 antlrVersion = "4.13.1"
-picocliVersion = "4.7.1"
+picocliVersion = "4.7.5"
 
 [libraries]
 jupiterEngine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junitVersion" }

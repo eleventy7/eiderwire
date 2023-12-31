@@ -42,10 +42,12 @@ public class EiderLanguageVisitor extends eiderBaseVisitor<EiderParserContext>
     {
         if (ctx.getChildCount() == 5)
         { //no annotation
+            System.out.println("field: " + ctx.getChild(0).getText() + ":" + ctx.getChild(1).getText());
             context.addMessageField(ctx.getChild(0).getText(), ctx.getChild(1).getText());
         }
         else
         { //annotation; todo capture annotation
+            System.out.println("annotatedField: " + ctx.getChild(1).getText() + ":" + ctx.getChild(2).getText());
             context.addMessageField(ctx.getChild(1).getText(), ctx.getChild(2).getText());
         }
         return visitChildren(ctx);
@@ -54,18 +56,21 @@ public class EiderLanguageVisitor extends eiderBaseVisitor<EiderParserContext>
     @Override
     public EiderParserContext visitAnnotationStatement(final eiderParser.AnnotationStatementContext ctx)
     {
+        System.out.println("annotation statement for above: " + ctx.getText());
         return visitChildren(ctx);
     }
 
     @Override
     public EiderParserContext visitAnnotationName(final eiderParser.AnnotationNameContext ctx)
     {
+        System.out.println("annotation name for above: " + ctx.getText());
         return visitChildren(ctx);
     }
 
     @Override
     public EiderParserContext visitAnnotationOptions(final eiderParser.AnnotationOptionsContext ctx)
     {
+        System.out.println("annotation options for above: " + ctx.getText());
         return visitChildren(ctx);
     }
 
